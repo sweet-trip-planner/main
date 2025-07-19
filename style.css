@@ -1,0 +1,44 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 20px;
+  background: #fdf6f9;
+  color: #333;
+  transition: all 0.3s ease;
+}
+h1 {
+  color: #d63384;
+}
+form {
+  margin-bottom: 20px;
+}
+#map {
+  height: 400px;
+  width: 100%;
+  margin-bottom: 20px;
+}
+.dark-mode {
+  background: #121212;
+  color: #eee;
+}
+.dark-mode h1 {
+  color: #ff70a6;
+}
+.dark-mode #map {
+  filter: invert(0.9) hue-rotate(180deg);
+}
+button {
+  margin: 5px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+#progressBarContainer {
+  width: 100%;
+  background: #eee;
+  height: 10px;
+  margin-bottom: 10px;
+}
+#progressBar {
+  width: 0%;
+  height: 10px;
+  background-color: #ff69b4;
+}
