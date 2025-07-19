@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sweet Trip Planner 🍬</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+</head>
+<body>
+  <button id="toggleDark">🌙 Toggle Dark Mode</button>
+  <h1>🍬 Sweet Trip Planner</h1>
+  <form id="tripForm">
+    <label>Start Location: <input type="text" id="start" required /></label><br>
+    <label>End Location: <input type="text" id="end" required /></label><br>
+    <label>Sweets (comma-separated): <input type="text" id="sweets" placeholder="e.g. Haribo, Drumstick, Skittles" required /></label><br>
+    <button type="submit">Plan My Trip</button>
+  </form>
+
+  <div id="map"></div>
+  <div id="progressBarContainer">
+    <div id="progressBar"></div>
+  </div>
+  <ul id="sweetStops"></ul>
+  <p id="countdown"></p>
+  <button onclick="window.print()">📄 Save/Print Trip Plan</button>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
