@@ -262,12 +262,10 @@
     }
 
     // Replace with your OpenRouteService API key here:
-    const OPENROUTESERVICE_API_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImZmNTMyZTAyM2FmMjQxYzJiM2UzYTUzMjgzZWU5NjAxIiwiaCI6Im11cm11cjY0In0=";
+    const OPENROUTESERVICE_API_KEY = "YOUR_API_KEY_HERE";
 
     async function getRoute(startCoord, endCoord) {
-      const body = {
-        coordinates: [startCoord, endCoord],
-      };
+      const body = { coordinates: [startCoord, endCoord] };
       const res = await fetch("https://api.openrouteservice.org/v2/directions/driving-car/geojson", {
         method: "POST",
         headers: {
@@ -277,10 +275,13 @@
         body: JSON.stringify(body),
       });
       const data = await res.json();
+      console.log("OpenRouteService response:", data);
+
       if (data.features && data.features.length > 0) {
         return data;
+      } else {
+        throw new Error("No route found in response");
       }
-      throw new Error("Failed to get route data");
     }
 
     function displayMap(coords, sweets, durationSeconds) {
@@ -364,7 +365,7 @@
 
       try {
         const route = await getRoute(startCoords, endCoords);
-        displayMap(route.geometry.coordinates, sweets, route.features[0].properties.summary.duration);
+        displayMap(route.features[0].geometry.coordinates, sweets, route.features[0].properties.summary.duration);
       } catch (error) {
         alert("Error fetching route data. Please check your inputs and API keys.");
         console.error(error);
