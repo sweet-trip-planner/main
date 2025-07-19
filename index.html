@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Sweet Trip Planner 🍬</title>
 
-<!-- Leaflet CSS -->    
+<!-- Leaflet CSS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 
 <style>
@@ -106,6 +106,23 @@
     font-weight: bold;
     margin-top: 10px;
   }
+  /* Autocomplete dropdown */
+  .autocomplete-suggestions {
+    border: 1px solid #999;
+    max-height: 150px;
+    overflow-y: auto;
+    background: white;
+    position: absolute;
+    z-index: 1000;
+    width: 100%;
+  }
+  .autocomplete-suggestion {
+    padding: 5px;
+    cursor: pointer;
+  }
+  .autocomplete-suggestion:hover {
+    background-color: #ddd;
+  }
 </style>
 </head>
 <body>
@@ -115,22 +132,26 @@
   <h1>🍬 Sweet Trip Planner</h1>
 
   <label for="start">Start Location:</label>
-  <input id="start" type="text" placeholder="e.g. Manchester, UK" autocomplete="off" />
-  <div id="startSuggestions" class="autocomplete-suggestions" style="position:relative;"></div>
+  <div style="position:relative; max-width: 400px;">
+    <input id="start" type="text" placeholder="e.g. Manchester, UK" autocomplete="off" />
+    <div id="startSuggestions" class="autocomplete-suggestions"></div>
+  </div>
 
   <label for="end">End Location:</label>
-  <input id="end" type="text" placeholder="e.g. Liverpool, UK" autocomplete="off" />
-  <div id="endSuggestions" class="autocomplete-suggestions" style="position:relative;"></div>
+  <div style="position:relative; max-width: 400px;">
+    <input id="end" type="text" placeholder="e.g. Liverpool, UK" autocomplete="off" />
+    <div id="endSuggestions" class="autocomplete-suggestions"></div>
+  </div>
 
   <label for="mode">Travel Mode:</label>
-  <select id="mode" aria-label="Travel mode">
+  <select id="mode" aria-label="Travel mode" style="max-width: 400px;">
     <option value="driving-car">Car 🚗</option>
     <option value="cycling-regular">Bike 🚴‍♂️</option>
     <option value="foot-walking">Walking 🚶‍♀️</option>
   </select>
 
   <label>Sweets:</label>
-  <div id="sweetsContainer"></div>
+  <div id="sweetsContainer" style="max-width: 420px;"></div>
   <button type="button" id="addSweetBtn">➕ Add Sweet</button>
 
   <br />
@@ -139,7 +160,9 @@
 
   <div id="map"></div>
 
-  <div id="progressBarContainer"><div id="progressBar"></div></div>
+  <div id="progressBarContainer" style="max-width: 420px;">
+    <div id="progressBar"></div>
+  </div>
 
   <ul id="sweetStops"></ul>
   <p id="countdown"></p>
@@ -148,7 +171,6 @@
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
   <script>
-    // Globals
     let map;
     let sweetTimers = [];
     let startCoords = null;
@@ -167,7 +189,6 @@
     const endSuggestions = document.getElementById("endSuggestions");
     const modeSelect = document.getElementById("mode");
 
-    // Debounce helper
     function debounce(func, wait) {
       let timeout;
       return function(...args) {
@@ -176,7 +197,6 @@
       };
     }
 
-    // Fetch suggestions from OSM Nominatim
     async function fetchSuggestions(query) {
       if (!query) return [];
       const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&limit=5`;
@@ -185,7 +205,6 @@
       return await res.json();
     }
 
-    // Render suggestions dropdown
     function renderSuggestions(container, suggestions, input) {
       container.innerHTML = "";
       if (!suggestions.length) {
@@ -196,8 +215,6 @@
         const div = document.createElement("div");
         div.className = "autocomplete-suggestion";
         div.textContent = place.display_name;
-        div.style.padding = "5px";
-        div.style.cursor = "pointer";
         div.onclick = () => {
           input.value = place.display_name;
           if (input === startInput) {
@@ -210,17 +227,9 @@
         };
         container.appendChild(div);
       });
-      container.style.border = "1px solid #999";
-      container.style.background = "white";
-      container.style.position = "absolute";
-      container.style.zIndex = "1000";
-      container.style.maxHeight = "150px";
-      container.style.overflowY = "auto";
-      container.style.width = input.offsetWidth + "px";
       container.style.display = "block";
     }
 
-    // Setup autocomplete on input
     function setupAutocomplete(input, container) {
       input.addEventListener("input", debounce(async () => {
         const query = input.value.trim();
@@ -242,7 +251,6 @@
       });
     }
 
-    // Add sweet input row
     function addSweet(name = "", quantity = 1) {
       const div = document.createElement("div");
       div.className = "sweet-entry";
@@ -282,15 +290,13 @@
       sweetTimers = [];
     }
 
-    // Initialize Leaflet map
     function initMap() {
       if (map) map.remove();
-      map = L.map("map").setView([53.4808, -2.2426], 10); // Center on Manchester by default
+      map = L.map("map").setView([53.4808, -2.2426], 10); // Manchester default
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
     }
 
-    // OpenRouteService API key
-    const OPENROUTESERVICE_API_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImZmNTMyZTAyM2FmMjQxYzJiM2UzYTUzMjgzZWU5NjAxIiwiaCI6Im11cm11cjY0In0=";
+    const OPENROUTESERVICE_API_KEY = "your-api-key-here";
 
     async function getRoute(startCoord, endCoord, mode) {
       const body = { coordinates: [startCoord, endCoord] };
@@ -318,22 +324,28 @@
       sweetStops.innerHTML = "";
       countdown.textContent = "";
 
+      // Calculate spacing and interval per sweet
       const spacing = Math.floor(coords.length / sweets.length);
       const interval = Math.floor(durationSeconds / sweets.length);
 
       sweets.forEach((sweet, i) => {
         const index = Math.min(spacing * i, coords.length - 1);
         const [lon, lat] = coords[index];
+        const timeMin = Math.round(((i + 1) * interval) / 60);
+
         const marker = L.marker([lat, lon]).addTo(map);
-        marker.bindPopup(`🍬 Time for: ${sweet}`).openPopup();
+
+        // Popup with sweet and time info
+        marker.bindPopup(`🍬 Eat <b>${sweet}</b> at ~${timeMin} minute${timeMin !== 1 ? 's' : ''} into the trip`).openPopup();
 
         const li = document.createElement("li");
-        li.textContent = `Eat "${sweet}" at ~${Math.round(((i + 1) * interval) / 60)} minutes into the trip.`;
+        li.textContent = `Eat "${sweet}" at ~${timeMin} minute${timeMin !== 1 ? 's' : ''} into the trip.`;
         sweetStops.appendChild(li);
 
         const timer = setTimeout(() => {
           updateProgress(((i + 1) / sweets.length) * 100);
-          countdown.textContent = `⏰ Eat "${sweet}" now! (${Math.round(((i + 1) * interval) / 60)} mins into trip)`;
+          countdown.textContent = `⏰ Eat "${sweet}" now! (~${timeMin} minute${timeMin !== 1 ? 's' : ''} into trip)`;
+          marker.openPopup();
         }, (i + 1) * interval * 1000);
         sweetTimers.push(timer);
       });
