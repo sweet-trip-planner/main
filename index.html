@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Sweet Trip Planner 🍬</title>
+<title>Sweet Trip Planner 🍬 - OSM Nominatim</title>
 
 <!-- Leaflet CSS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
@@ -155,7 +155,7 @@
     const endInput = document.getElementById("end");
     const endSuggestions = document.getElementById("endSuggestions");
 
-    // Helper to debounce user input for autocomplete
+    // Debounce helper
     function debounce(func, wait) {
       let timeout;
       return function(...args) {
@@ -164,7 +164,7 @@
       };
     }
 
-    // Fetch suggestions from Nominatim
+    // Fetch suggestions from OSM Nominatim
     async function fetchSuggestions(query) {
       if (!query) return [];
       const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&limit=5`;
@@ -199,7 +199,7 @@
       container.style.display = "block";
     }
 
-    // Attach autocomplete logic to input
+    // Setup autocomplete on input
     function setupAutocomplete(input, container) {
       input.addEventListener("input", debounce(async () => {
         const query = input.value.trim();
@@ -214,7 +214,6 @@
         renderSuggestions(container, suggestions, input);
       }, 300));
 
-      // Hide suggestions on blur after short delay (to allow click)
       input.addEventListener("blur", () => {
         setTimeout(() => {
           container.style.display = "none";
@@ -262,8 +261,8 @@
       sweetTimers = [];
     }
 
-    // Insert your OpenRouteService API key here:
-    const OPENROUTESERVICE_API_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImZmNTMyZTAyM2FmMjQxYzJiM2UzYTUzMjgzZWU5NjAxIiwiaCI6Im11cm11cjY0In0=";
+    // Replace with your OpenRouteService API key here:
+    const OPENROUTESERVICE_API_KEY = "YOUR_API_KEY_HERE";
 
     async function getRoute(startCoord, endCoord) {
       const body = {
