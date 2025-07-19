@@ -1,381 +1,176 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Sweet Trip Planner 🍬</title>
-
-<!-- Leaflet CSS -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    margin: 20px;
-    background: #fdf6f9;
-    color: #333;
-    transition: all 0.3s ease;
-  }
-  h1 {
-    color: #d63384;
-  }
-  form {
-    margin-bottom: 20px;
-  }
-  #map {
-    height: 400px;
-    width: 100%;
-    margin-bottom: 20px;
-  }
-  .dark-mode {
-    background: #121212;
-    color: #eee;
-  }
-  .dark-mode h1 {
-    color: #ff70a6;
-  }
-  .dark-mode #map {
-    filter: invert(0.9) hue-rotate(180deg);
-  }
-  button {
-    margin: 5px 0;
-    padding: 6px 12px;
-    cursor: pointer;
-  }
-  #progressBarContainer {
-    width: 100%;
-    background: #eee;
-    height: 10px;
-    margin-bottom: 10px;
-    border-radius: 5px;
-    overflow: hidden;
-  }
-  #progressBar {
-    width: 0%;
-    height: 10px;
-    background-color: #ff69b4;
-    transition: width 0.3s ease;
-  }
-  ul {
-    padding-left: 1em;
-  }
-  /* Autocomplete dropdown */
-  .autocomplete-suggestions {
-    border: 1px solid #999;
-    max-height: 150px;
-    overflow-y: auto;
-    background: white;
-    position: absolute;
-    z-index: 1000;
-    width: 90%;
-  }
-  .autocomplete-suggestion {
-    padding: 5px;
-    cursor: pointer;
-  }
-  .autocomplete-suggestion:hover {
-    background-color: #ddd;
-  }
-  /* Sweet input container */
-  #sweetsContainer {
-    margin-bottom: 10px;
-  }
-  .sweet-entry {
-    display: flex;
-    align-items: center;
-    margin-bottom: 5px;
-  }
-  .sweet-entry input[type="text"] {
-    flex-grow: 1;
-    padding: 5px;
-  }
-  .sweet-entry input[type="number"] {
-    width: 60px;
-    margin-left: 5px;
-    padding: 5px;
-  }
-  .sweet-entry button {
-    margin-left: 5px;
-    padding: 5px 8px;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sweet Trip Planner</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fff; color: #000; transition: background 0.3s, color 0.3s; }
+    .dark-mode { background: #121212; color: #fff; }
+    header, footer { padding: 1rem; text-align: center; background: #6200ee; color: #fff; }
+    main { padding: 1rem; max-width: 800px; margin: auto; }
+    label, input, select { display: block; margin: 0.5rem 0; }
+    #map { height: 300px; margin: 1rem 0; }
+    .sweet-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+    .progress-container { background: #ccc; height: 20px; width: 100%; margin: 1rem 0; }
+    .progress-bar { height: 100%; width: 0%; background: green; }
+    .sweet-list { margin-top: 1rem; }
+    button { margin-top: 1rem; }
+  </style>
 </head>
 <body>
-  <button id="toggleDark">🌙 Toggle Dark Mode</button>
-  <h1>🍬 Sweet Trip Planner</h1>
+  <header>
+    <h1>Sweet Trip Planner 🍬</h1>
+    <button onclick="toggleDarkMode()">Toggle Dark Mode</button>
+  </header>
 
-  <form id="tripForm" autocomplete="off" style="position: relative;">
-    <label>
-      Start Location:
-      <input id="start" type="text" placeholder="e.g. Manchester, UK" required />
-      <div id="startSuggestions" class="autocomplete-suggestions"></div>
-    </label><br /><br />
-    <label>
-      End Location:
-      <input id="end" type="text" placeholder="e.g. Liverpool, UK" required />
-      <div id="endSuggestions" class="autocomplete-suggestions"></div>
-    </label><br /><br />
+  <main>
+    <form id="tripForm">
+      <label for="start">Start Location:</label>
+      <input id="start" name="start" type="text" required />
 
-    <label>Sweets:</label>
-    <div id="sweetsContainer"></div>
-    <button type="button" id="addSweetBtn">➕ Add Sweet</button><br /><br />
+      <label for="end">End Location:</label>
+      <input id="end" name="end" type="text" required />
 
-    <button type="submit">Plan My Trip</button>
-  </form>
+      <label for="mode">Travel Mode:</label>
+      <select id="mode">
+        <option value="driving-car">Driving</option>
+        <option value="foot-walking">Walking</option>
+        <option value="cycling-regular">Cycling</option>
+      </select>
 
-  <div id="map"></div>
-  <div id="progressBarContainer">
-    <div id="progressBar"></div>
-  </div>
+      <div id="sweetInputs">
+        <div class="sweet-row">
+          <input type="text" placeholder="Sweet Type" class="sweet-type" />
+          <input type="number" placeholder="Quantity" class="sweet-qty" min="1" />
+          <button type="button" onclick="removeSweetRow(this)">−</button>
+        </div>
+      </div>
+      <button type="button" onclick="addSweetRow()">+ Add Sweet</button>
 
-  <ul id="sweetStops"></ul>
-  <p id="countdown"></p>
+      <button type="submit">Plan My Trip</button>
+    </form>
 
-  <button onclick="window.print()">📄 Save/Print Trip Plan</button>
+    <div id="map"></div>
+    <div class="progress-container">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+    <div id="countdownText"></div>
+    <button onclick="window.print()">Print Trip</button>
+  </main>
 
-  <!-- Leaflet JS -->
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <footer>
+    &copy; 2025 Sweet Trip Planner
+  </footer>
 
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    // Globals
-    let map = null;
-    let sweetTimers = [];
-    let startCoords = null;
-    let endCoords = null;
+    let map = L.map('map').setView([55.8642, -4.2518], 10);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    let routeLine;
 
-    const sweetsContainer = document.getElementById("sweetsContainer");
-    const addSweetBtn = document.getElementById("addSweetBtn");
-    const sweetStops = document.getElementById("sweetStops");
-    const countdown = document.getElementById("countdown");
-    const progressBar = document.getElementById("progressBar");
-    const toggleDarkBtn = document.getElementById("toggleDark");
+    const API_KEY = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImZmNTMyZTAyM2FmMjQxYzJiM2UzYTUzMjgzZWU5NjAxIiwiaCI6Im11cm11cjY0In0=';
 
-    const startInput = document.getElementById("start");
-    const startSuggestions = document.getElementById("startSuggestions");
-    const endInput = document.getElementById("end");
-    const endSuggestions = document.getElementById("endSuggestions");
-
-    // Debounce helper
-    function debounce(func, wait) {
-      let timeout;
-      return function(...args) {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => func.apply(this, args), wait);
-      };
-    }
-
-    // Fetch suggestions from OSM Nominatim
-    async function fetchSuggestions(query) {
-      if (!query) return [];
-      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&limit=5`;
-      const res = await fetch(url, { headers: { "Accept-Language": "en" } });
-      if (!res.ok) return [];
-      return await res.json();
-    }
-
-    // Render suggestions dropdown
-    function renderSuggestions(container, suggestions, input) {
-      container.innerHTML = "";
-      if (!suggestions.length) {
-        container.style.display = "none";
-        return;
-      }
-      suggestions.forEach(place => {
-        const div = document.createElement("div");
-        div.className = "autocomplete-suggestion";
-        div.textContent = place.display_name;
-        div.onclick = () => {
-          input.value = place.display_name;
-          if(input === startInput) {
-            startCoords = [parseFloat(place.lon), parseFloat(place.lat)];
-          } else {
-            endCoords = [parseFloat(place.lon), parseFloat(place.lat)];
-          }
-          container.innerHTML = "";
-          container.style.display = "none";
-        };
-        container.appendChild(div);
-      });
-      container.style.display = "block";
-    }
-
-    // Setup autocomplete on input
-    function setupAutocomplete(input, container) {
-      input.addEventListener("input", debounce(async () => {
-        const query = input.value.trim();
-        if (!query) {
-          container.innerHTML = "";
-          container.style.display = "none";
-          if(input === startInput) startCoords = null;
-          else endCoords = null;
-          return;
-        }
-        const suggestions = await fetchSuggestions(query);
-        renderSuggestions(container, suggestions, input);
-      }, 300));
-
-      input.addEventListener("blur", () => {
-        setTimeout(() => {
-          container.style.display = "none";
-        }, 150);
-      });
-    }
-
-    // Add sweet entry
-    function addSweet(name = "", quantity = 1) {
-      const div = document.createElement("div");
-      div.className = "sweet-entry";
-
-      const sweetInput = document.createElement("input");
-      sweetInput.type = "text";
-      sweetInput.placeholder = "Sweet name";
-      sweetInput.value = name;
-      sweetInput.required = true;
-
-      const qtyInput = document.createElement("input");
-      qtyInput.type = "number";
-      qtyInput.min = 1;
-      qtyInput.value = quantity;
-
-      const removeBtn = document.createElement("button");
-      removeBtn.type = "button";
-      removeBtn.textContent = "➖";
-      removeBtn.title = "Remove sweet";
-      removeBtn.onclick = () => div.remove();
-
-      div.appendChild(sweetInput);
-      div.appendChild(qtyInput);
-      div.appendChild(removeBtn);
-
-      sweetsContainer.appendChild(div);
-    }
-
-    addSweetBtn.addEventListener("click", () => addSweet());
-
-    toggleDarkBtn.addEventListener("click", () => {
+    function toggleDarkMode() {
       document.body.classList.toggle("dark-mode");
-    });
-
-    function clearTimers() {
-      sweetTimers.forEach((t) => clearTimeout(t));
-      sweetTimers = [];
     }
 
-    // Replace with your OpenRouteService API key here:
-    const OPENROUTESERVICE_API_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImZmNTMyZTAyM2FmMjQxYzJiM2UzYTUzMjgzZWU5NjAxIiwiaCI6Im11cm11cjY0In0=";
+    function addSweetRow() {
+      const container = document.getElementById("sweetInputs");
+      const div = document.createElement("div");
+      div.className = "sweet-row";
+      div.innerHTML = `
+        <input type="text" placeholder="Sweet Type" class="sweet-type" />
+        <input type="number" placeholder="Quantity" class="sweet-qty" min="1" />
+        <button type="button" onclick="removeSweetRow(this)">−</button>
+      `;
+      container.appendChild(div);
+    }
 
-    async function getRoute(startCoord, endCoord) {
-      const body = { coordinates: [startCoord, endCoord] };
-      const res = await fetch("https://api.openrouteservice.org/v2/directions/driving-car/geojson", {
-        method: "POST",
+    function removeSweetRow(button) {
+      button.parentElement.remove();
+    }
+
+    async function getCoords(location) {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}`);
+      const data = await res.json();
+      if (data.length === 0) throw new Error("Location not found");
+      return [parseFloat(data[0].lon), parseFloat(data[0].lat)];
+    }
+
+    async function getRoute(startCoords, endCoords, mode) {
+      const res = await fetch(`https://api.openrouteservice.org/v2/directions/${mode}/geojson`, {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
-          Authorization: OPENROUTESERVICE_API_KEY,
+          'Authorization': API_KEY,
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify({
+          coordinates: [startCoords, endCoords]
+        }),
       });
       const data = await res.json();
-      console.log("OpenRouteService response:", data);
+      return data;
+    }
 
-      if (data.features && data.features.length > 0) {
-        return data;
-      } else {
-        throw new Error("No route found in response");
+    function showProgress(durationMinutes, sweetEvents) {
+      const progress = document.getElementById("progressBar");
+      const text = document.getElementById("countdownText");
+      let startTime = Date.now();
+      let totalTime = durationMinutes * 60 * 1000;
+      let sweetIndex = 0;
+
+      function update() {
+        let elapsed = Date.now() - startTime;
+        let pct = Math.min(elapsed / totalTime, 1);
+        progress.style.width = (pct * 100) + "%";
+
+        let nextSweetTime = sweetEvents[sweetIndex];
+        if (elapsed >= nextSweetTime) {
+          alert("Time for a sweet! 🍭");
+          sweetIndex++;
+        }
+
+        if (pct < 1) {
+          text.textContent = `Time remaining: ${Math.ceil((totalTime - elapsed) / 60000)} mins`;
+          requestAnimationFrame(update);
+        } else {
+          text.textContent = "You've arrived!";
+        }
       }
+
+      update();
     }
 
-    function displayMap(coords, sweets, durationSeconds) {
-      if (map) map.remove();
-      map = L.map("map").setView([coords[0][1], coords[0][0]], 10);
-
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
-
-      const latlngs = coords.map(([lon, lat]) => [lat, lon]);
-      L.polyline(latlngs, { color: "purple" }).addTo(map);
-
-      sweetStops.innerHTML = "";
-      countdown.textContent = "";
-
-      const spacing = Math.floor(coords.length / sweets.length);
-      const interval = Math.floor(durationSeconds / sweets.length);
-
-      sweets.forEach((sweet, i) => {
-        const index = Math.min(spacing * i, coords.length - 1);
-        const [lon, lat] = coords[index];
-        const marker = L.marker([lat, lon]).addTo(map);
-        marker.bindPopup(`🍬 Time for: ${sweet}`).openPopup();
-
-        const li = document.createElement("li");
-        li.textContent = `Eat "${sweet}" at ~${Math.round(((i + 1) * interval) / 60)} minutes into the trip.`;
-        sweetStops.appendChild(li);
-
-        const timer = setTimeout(() => {
-          updateProgress(((i + 1) / sweets.length) * 100);
-          countdown.textContent = `⏰ Eat "${sweet}" now! (${Math.round(((i + 1) * interval) / 60)} mins into trip)`;
-        }, (i + 1) * interval * 1000);
-        sweetTimers.push(timer);
-      });
-
-      const endTimer = setTimeout(() => {
-        countdown.textContent = "🎉 Trip complete! All sweets enjoyed.";
-        updateProgress(100);
-      }, durationSeconds * 1000);
-      sweetTimers.push(endTimer);
-    }
-
-    function updateProgress(percent) {
-      progressBar.style.width = `${percent}%`;
-    }
-
-    const form = document.getElementById("tripForm");
-    form.addEventListener("submit", async (e) => {
+    document.getElementById("tripForm").addEventListener("submit", async function (e) {
       e.preventDefault();
+      const start = document.getElementById("start").value;
+      const end = document.getElementById("end").value;
+      const mode = document.getElementById("mode").value;
 
-      clearTimers();
-      sweetStops.innerHTML = "";
-      countdown.textContent = "";
-      progressBar.style.width = "0%";
-
-      if (!startCoords) {
-        alert("Please select a valid start location from the dropdown.");
-        return;
-      }
-      if (!endCoords) {
-        alert("Please select a valid end location from the dropdown.");
-        return;
-      }
-
-      const sweetEntries = sweetsContainer.querySelectorAll(".sweet-entry");
-      let sweets = [];
-      for (const entry of sweetEntries) {
-        const sweetName = entry.querySelector('input[type="text"]').value.trim();
-        const quantity = parseInt(entry.querySelector('input[type="number"]').value, 10);
-        if (!sweetName || quantity < 1) {
-          alert("Please enter valid sweet names and quantities.");
-          return;
-        }
-        for (let i = 0; i < quantity; i++) {
-          sweets.push(sweetName);
-        }
-      }
-      if (sweets.length === 0) {
-        alert("Please add at least one sweet.");
-        return;
-      }
+      const sweetTypes = Array.from(document.getElementsByClassName("sweet-type")).map(i => i.value).filter(v => v);
+      const sweetQtys = Array.from(document.getElementsByClassName("sweet-qty")).map(i => parseInt(i.value)).filter(v => v > 0);
+      const totalSweets = sweetQtys.reduce((a, b) => a + b, 0);
 
       try {
-        const route = await getRoute(startCoords, endCoords);
-        displayMap(route.features[0].geometry.coordinates, sweets, route.features[0].properties.summary.duration);
-      } catch (error) {
-        alert("Error fetching route data. Please check your inputs and API keys.");
-        console.error(error);
+        const startCoords = await getCoords(start);
+        const endCoords = await getCoords(end);
+        const data = await getRoute(startCoords, endCoords, mode);
+        const duration = data.features[0].properties.summary.duration / 60;
+
+        if (routeLine) map.removeLayer(routeLine);
+        routeLine = L.geoJSON(data).addTo(map);
+        map.fitBounds(routeLine.getBounds());
+
+        const interval = duration * 60 * 1000 / totalSweets;
+        const sweetSchedule = Array.from({ length: totalSweets }, (_, i) => (i + 1) * interval);
+        showProgress(duration, sweetSchedule);
+
+      } catch (err) {
+        alert("Error: " + err.message);
       }
     });
-
-    window.onload = () => {
-      setupAutocomplete(startInput, startSuggestions);
-      setupAutocomplete(endInput, endSuggestions);
-    };
   </script>
 </body>
 </html>
